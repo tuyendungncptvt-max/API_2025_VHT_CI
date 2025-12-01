@@ -1,1 +1,43 @@
+ name: Postman API Testing CI
 
+on: push
+
+jobs:
+  newman-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # CÀI NEWMAN & REPORTER ---
+      - name: Install Newman and HTML Reporter
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      # TẠO THƯ MỤC REPORT ---
+      - name: Create Report Directory
+        run: mkdir -p test-results
+
+      - name: Run Postman Collection
+        run: |
+          newman run https://api.postman.com/collections/49565847-c607941c-e192-49f9-8dfa-c5804e9531fc?apikey=PMAK-692966972942d300017cdc3b-e6fa54e7eff0fb4c7623877f6022696077 \
+          -e https://api.postman.com/environments/49565847-5810971b-46b2-4d11-b3a0-86ce211b90e8?apikey=PMAK-692966972942d300017cdc3b-e6fa54e7eff0fb4c7623877f6022696077 \
+          -r cli,htmlextra \
+          --reporter-htmlextra-export test-results/html-report.html \
+          --reporter-htmlextra-title "API Test Report"
+
+      #  UPLOAD BÁO CÁO
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-html-report
+          path: test-results/
+          retention-days: 30 # Giữ báo cáo trong 30 ngày
